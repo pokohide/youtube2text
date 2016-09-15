@@ -1,0 +1,2 @@
+# youtube2text
+youtubeの動画をテキストに書き起こすAPI
