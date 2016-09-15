@@ -1,0 +1,33 @@
+{
+  "name": "youtube2text",
+  "version": "1.0.0",
+  "description": "this is convert youtube url into text",
+  "main": "app.js",
+  "engines": {
+    "node": "4.4.3",
+    "npm": "3.10.3"
+  },
+  "scripts": {
+    "start": "node --optimize_for_size --max_old_space_size=920 --gc_interval=100 app.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hyde2able/youtube2text.git"
+  },
+  "author": "pokohide",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/hyde2able/youtube2text/issues"
+  },
+  "homepage": "https://github.com/hyde2able/youtube2text#readme",
+  "dependencies": {
+    "async": "^2.0.1",
+    "axios": "^0.14.0",
+    "kcors": "^1.2.1",
+    "koa": "^1.2.1",
+    "koa-body": "^1.5.0",
+    "koa-json": "^1.1.3",
+    "koa-router": "^5.4.0",
+    "q": "^1.4.1"
+  }
+}
