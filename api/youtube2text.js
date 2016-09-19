@@ -2,62 +2,108 @@
 
 const youtubedl = require('youtube-dl')
 const fs = require('fs')
-const output = 'myvideo.mp4'
+const path = require('path')
 const q = require('q')
-// const video = youtubedl('http://www.youtube.com/watch?v=90AiXO1pAiA',
-//   // Optional arguments passed to youtube-dl.
-//   ['--format=18'],
-//   // Additional options can be given for calling `child_process.execFile()`.
-//   { cwd: __dirname });
+const speech = require('google-speech-api')
+const spawn = require('child_process').spawn
+const filed = require('filed')
+const request = require('superagent')
+const findRemoveSync = require('find-remove')
+const watson = require('./watson')
+
+
+
 
 // POST /api/youtube2text
 const youtube2text = function* (next) {
   const deferred = q.defer()
-  let downloaded = 0
-  const url = 'http://www.youtube.com/watch?v=90AiXO1pAiA'
+  const v = '6JCLY0Rlx6Q'
+  const url = 'https://www.youtube.com/watch?v=' + v
+  let filename
 
- 
-  //////////////////////////////////////////////////////////////////
-  // if(fs.existsSync(output)) downloaded = fs.statSync(output).size
-
-  // const video = youtubedl(url, ['--format=18'], { start: downloaded, cwd: __dirname })
-  // video.on('info', function(info) {
+  // const video = youtubedl.exec(url, ['-x', '--audio-format', 'wav'], {})
+  // let size = 0
+  // video.on('info', function(info){
   //   console.log('Download started')
   //   console.log('filename: ' + info._filename)
+  //   filename = v + '.wav'
 
-  //   const total = info.size + downloaded
-  //   console.log('size: ' + total)
+  //   size = info.size
+  //   const file = path.join(__dirname, filename)
+  //   video.pipe(fs.createWriteStream(file))
+  //   console.log('size: ' + size)
+  // })
 
-  //   if(downloaded > 0) {
-  //     console.log('resuming from: ' + downloaded)
-  //     console.log('remaining bytes: ' + info.size)
+  // let pos = 0
+  // video.on('data', function data(chunk) {
+  //   pos += chunk.length
+
+  //   if(size) {
+  //     const percent = (pos / size * 100).toFixed(2)
+  //     process.stdout.cursorTo(0)
+  //     process.stdout.clearLine(1)
+  //     process.stdout.write(percent + '%')
   //   }
   // })
-
-  // video.pipe(fs.createWriteStream('myvideo.mp4', { flags: 'a' }))
-
-  // video.on('complete', function complete(info) {
-  //   'use strict';
-  //   console.log('filename: ' + info._filename + ' already downloaded')
+  
+  // video.on('end', function end() {
+  //   console.log('\nDone');
+  //   deferred.resolve({ result: 'done' })
   // })
 
-  // video.on('end', function() {
-  //   console.log('finished downloading')
-  //   deferred.resolve({ message: 'ok'})
-  // })
-  ///////////////////////////////////////////////////////////////////
+  // filenameを取得
+  youtubedl.getInfo(url, function(err, info) {
+    if(err) throw err;
+    const extension = /(.*)(?:\.([^.]+$))/
+    filename = info._filename.match(extension)[1] + '.wav'
 
-  youtubedl.exec(url, ['-x', '--audio-format', 'wav'], {}, function exec(err, output) {
-    if (err) { throw err; }
-    console.log(output.join('\n'));
-    deferred.resolve({ result: output })
+
+    youtubedl.exec(url, ['-x', '--audio-format', 'wav'], {}, function exec(err, output) {
+      if(err) throw err
+      console.log(output.join('\n'))
+      console.log('yt2mp3 is done')
+
+      //findRemoveSync('../', {extensions: ['.wav']})
+      //console.log('deleted')
+      watson.wav2text(filename)
+        .then(function() {
+          console.log('Done!!!!')
+          deferred.resolve({ result: 'ok' })
+        })
+    })
   })
 
-  // youtubedl.exec(url ,['-x', '--audio-format', 'wav'], {}, function(err, output) {
-  //   if(err) throw err;
-  //   deferred.resolve({ result: output })
-  // })
   this.body = yield deferred.promise
 }
+
+const mp32text = function(filename) {
+  const deferred = q.defer()
+  const opts = {
+    key: 'AIzaSyDL_5mi0oJGSzbe77vXCmzWIt2qwv7MLEM',
+    file: filename
+  }
+  console.log(filename + ' is now converting.')
+  speech(opts, function(err, results) {
+    if(err) throw err
+    console.log(results)
+    console.log('speech is done')
+    deferred.resolve(results)
+  })
+  return deferred.promise
+}
+
+
+
+
+
+  // var tts = spawn('stenographer', ['-t', 'wav']);
+  // filed(req.files.audio.path).pipe(tts.stdin);
+
+  // // processAudio(req.files.audio.path, function(result){
+  //   // console.log(result);
+  //   // res.send('Uploaded ' + req.files.audio.name + ' to ' + req.files.audio.path);
+  //   tts.stdout.pipe(res);
+  // // })
+
 
 module.exports = youtube2text
